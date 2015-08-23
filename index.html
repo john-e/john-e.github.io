@@ -1,8 +1,119 @@
+<!DOCTYPE html>
 <html>
 <head>
-<title>JOHn-E</title>
+	<title>Console</title>
+	<style type="text/css">
+	input#cmd{border:1px solid #000;width: 100%;padding: 10px;font-size: 14px;box-sizing:border-box;}
+	div#dump div {
+	    padding: 8px 5px;
+	    font-family: monospace;
+	    border-bottom: 1px solid #D6D6D6;
+	}
+	div#dump div:last-child {border-bottom: none;}
+	div#dump div.input:before,div#dump div.output:before { 
+		background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAA3NCSVQICAjb4U/gAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA81BMVEUAAAAAAAB/f38/Pz9mZmZVVVVfX19UVFRFRUVISEhRUVFRUVFQUFBSUlJPT09PT09RUVFSUlJRUVFPT09QUFBQUFBSUlJQUFBQUFBQUFBPT09QUFBRUVFQUFBQUFBRUVFRUVFQUFBRUVFQUFBQUFBRUVFRUVFQUFBRUVFRUVFQUFBQUFBQUFBRUVFRUVFQUFBPT09QUFBQUFBRUVFRUVFQUFBRUVFQUFBRUVFRUVFPT09PT09QUFBRUVFRUVFPT09RUVFQUFBPT09QUFBRUVFRUVFRUVFPT09PT09RUVFRUVFRUVFPT09PT09RUVFRUVFRUVFsdsgGAAAAUHRSTlMAAQIEBQYICQsONTg8PkBDRUpLUFJWV1lfYmNmZ2hpamtsbn6ChoeIiYqMj5ucnaKkpaiqrK6vsbK5ur2+wsnKzM7Q1Njb3uDj6Ovs8Pr7/uuIJZMAAAFESURBVHja7drXToJBFEXhg4LYsTdsiKLYsXdB7I3z/k/jhSaSYCbR+M8yce8X+NbVXMyMmaZpmqZp2jfXld+r311tjWUYPrXw7O+7HyH8zK5/rgT4h968NdiPXtDixy7YcUcLZtzRguyjswXj7mzBpsMF5w4XVB0uOHa4oOxwQa/TBZd0QfcLXTDZoAtmVaACFahABSpQgQpUoAIV/KhgCS8YpAuu2+iCnMEFZYMLjgwuOIsRMBcIOIV9P4D9CEdR2Pd+2K+nWL8xwPpeTNoP84k/bcmX/5/9efnBLcuXn+AK8uX/YX9FfqLLw37PK+tbDfb7YN9WYd9OYD/4jSfGNVjoI1MU39Zh30Zh3zoeWN9sCvbNtmHf0vus/0VBZL+lILpvlq40+YtGbPrpg78dMmadE5XazcXGcLtpmqZpmqb9zt4Az3NJDb7FdiQAAAAASUVORK5CYII="); 
+		background-size: 15px;
+	    background-repeat: no-repeat;
+	    background-position: 0;
+	    content: '';
+	    display: inline-block;
+	    width: 15px;
+	    height: 15px;
+	    vertical-align: middle;
+	    margin-right: 4px;
+	    position: relative;
+	    top: -1px;
+	    opacity: 0.6;
+	}
+	div#dump div.output:before { background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAA3NCSVQICAjb4U/gAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA4VBMVEUAAAAAAAB/f38/Pz9mZmZVVVVISEhfX19UVFRFRUVTU1NTU1NPT09RUVFRUVFPT09RUVFPT09RUVFRUVFSUlJRUVFQUFBSUlJRUVFRUVFQUFBPT09RUVFQUFBPT09QUFBQUFBQUFBRUVFQUFBQUFBRUVFQUFBRUVFRUVFQUFBRUVFQUFBRUVFRUVFRUVFPT09QUFBPT09RUVFRUVFRUVFQUFBRUVFRUVFRUVFRUVFRUVFQUFBRUVFQUFBRUVFRUVFRUVFQUFBRUVFQUFBPT09RUVFRUVFPT09PT09RUVFRUVFkR6qSAAAASnRSTlMAAQIEBQYHCAkLKy4wSEtQUVNUVVdYWVpbXl9gYWJjfH6MjY6Pk5WWl5iam5ygo6Slp6msrbW8v8DCzM7P0dze3+Hi5Ofo6/f5/mQelHoAAAFJSURBVHja7drXTgJhFEXhMwNWrCiC2As4FhR7wwq28/4PJIkxkqCOJuZfRvd+gW8lzNwMx0zTNE3TNO1n1lfcaVxd7JYHIL/Y8pfdz0cAH1f8bbVMeH/TO7eXYf3gBV1+4IJ3fPetiPXdp2Dfb7Os7z4C+74K+34I+34M+74P+74A+56D/SPYfxhk/acC7Jfly5cvX758+fLly/87vlVgvwD7PU3WtzHYtw3Yt1PYtwbs8wH4T7BOP4Sj9GuYvaELxp0uWKILompKwYwKVKCCX1Iwq4IABWsqUMEXCuZUoIL/URCrIL2gRBc85uiCE6MLhuiCRYMLDgJ8vogT9CFIKQhxyPRpwbLBBcPGFlwHu6n8oCBvhhYkZmhBPfBZbcL6XQV14LR6pfOkN7zf3sTrnzt308Rxe3u9k7Wzy/PtUr9pmqZpmqZ9c88qTQrBMNfLiwAAAABJRU5ErkJggg=="); }
+	div#dump div.error{color:#CC2424;}
+	div#dump div.output{padding-left: 10px}
+	div#dump div.error span{font-weight: bold}
+	div#dump div.undefined{color: #B1B1B1;}
+	div#dump div.string{color: #03BD03;}
+	div#dump div.number{color: #1C89E8;}
+	div.controls {
+		padding: 5px;
+	    font-family: monospace;
+	    font-size: 10px;
+	    background-color: #EAEAEA;
+	}
+	div.controls a{
+		color: #545454;
+		cursor: pointer;
+		text-decoration: underline;
+	}
+	</style>
 </head>
 <body>
-<center>Baking</center>
+<input type="text" id="cmd"/>
+<div class="controls">
+	<a id="clearConsole">clear</a>
+</div>
+<div id="dump">
+</div>
+<script type="text/javascript">
+	Object.prototype.getClassName = function() {  //credits: http://stackoverflow.com/a/332429
+	   var funcNameRegex = /function (.{1,})\(/;
+	   var results = (funcNameRegex).exec((this).constructor.toString());
+	   return (results && results.length > 1) ? results[1] : "";
+	};
+
+	var cmdInput = document.getElementById('cmd');
+	var outputDiv = document.getElementById('dump');
+	var controls = []
+	var cmdCache = []; var cmdIdx = -1;
+
+	controls['clear'] = document.getElementById('clearConsole');
+
+	controls['clear'].addEventListener("click", function(e){
+		outputDiv.innerHTML = '';
+	});
+
+	cmdInput.addEventListener("keyup", function(e){
+		switch(e.keyCode){
+			case 13: //ENTER
+				if(cmdInput.value=='')
+					return;
+				out = evalCmd(cmdInput.value);
+				showOutput(cmdInput.value,out);
+				cmdInput.value = '';
+			break;
+			case 38: //UP
+				cmdIdx--;
+				if(cmdIdx<0)
+					cmdIdx = -1;
+				cmdInput.value = cmdCache[cmdIdx] ? cmdCache[cmdIdx] : '';
+			break;
+			case 40: //DOWN
+				cmdIdx++;
+				if(cmdIdx>cmdCache.length)
+					cmdIdx = cmdCache.length;
+				cmdInput.value = cmdCache[cmdIdx] ? cmdCache[cmdIdx] : '';
+			break;
+		}
+	});
+	var evalCmd = function(cmd){
+		try{
+			cmdCache.push(cmd);
+			cmdIdx = cmdCache.length;
+			out = eval.call(window,cmd);
+		}catch(e){
+			out = {
+				error: e.getClassName(),
+				message: e.message
+			};
+		}
+		return out;
+	}
+	var showOutput = function(input, output){
+		input = '<div class="input">'+input+'</div>';
+		if(typeof(output) == 'object' && output.error)
+			output = '<div class="output error"><span>'+output.error+':</span> '+output.message+'</div>';
+		else
+			output = '<div class="output '+(typeof(output))+'">'+output+'</div>';
+		outputDiv.innerHTML = input + output + outputDiv.innerHTML;
+	}
+</script>
 </body>
 </html>
