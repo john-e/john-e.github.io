@@ -3,7 +3,7 @@
 <head>
 	<title>Console</title>
 	<style type="text/css">
-	input#cmd{border:1px solid #000;width: 100%;padding: 10px;font-size: 14px;box-sizing:border-box;}
+    body{font-family: Arial}
 	div#dump div {
 	    padding: 8px 5px;
 	    font-family: monospace;
@@ -26,6 +26,9 @@
 	    opacity: 0.6;
 	}
 	div#dump div.output:before { background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAA3NCSVQICAjb4U/gAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA4VBMVEUAAAAAAAB/f38/Pz9mZmZVVVVISEhfX19UVFRFRUVTU1NTU1NPT09RUVFRUVFPT09RUVFPT09RUVFRUVFSUlJRUVFQUFBSUlJRUVFRUVFQUFBPT09RUVFQUFBPT09QUFBQUFBQUFBRUVFQUFBQUFBRUVFQUFBRUVFRUVFQUFBRUVFQUFBRUVFRUVFRUVFPT09QUFBPT09RUVFRUVFRUVFQUFBRUVFRUVFRUVFRUVFRUVFQUFBRUVFQUFBRUVFRUVFRUVFQUFBRUVFQUFBPT09RUVFRUVFPT09PT09RUVFRUVFkR6qSAAAASnRSTlMAAQIEBQYHCAkLKy4wSEtQUVNUVVdYWVpbXl9gYWJjfH6MjY6Pk5WWl5iam5ygo6Slp6msrbW8v8DCzM7P0dze3+Hi5Ofo6/f5/mQelHoAAAFJSURBVHja7drXTgJhFEXhMwNWrCiC2As4FhR7wwq28/4PJIkxkqCOJuZfRvd+gW8lzNwMx0zTNE3TNO1n1lfcaVxd7JYHIL/Y8pfdz0cAH1f8bbVMeH/TO7eXYf3gBV1+4IJ3fPetiPXdp2Dfb7Os7z4C+74K+34I+34M+74P+74A+56D/SPYfxhk/acC7Jfly5cvX758+fLly/87vlVgvwD7PU3WtzHYtw3Yt1PYtwbs8wH4T7BOP4Sj9GuYvaELxp0uWKILompKwYwKVKCCX1Iwq4IABWsqUMEXCuZUoIL/URCrIL2gRBc85uiCE6MLhuiCRYMLDgJ8vogT9CFIKQhxyPRpwbLBBcPGFlwHu6n8oCBvhhYkZmhBPfBZbcL6XQV14LR6pfOkN7zf3sTrnzt308Rxe3u9k7Wzy/PtUr9pmqZpmqZ9c88qTQrBMNfLiwAAAABJRU5ErkJggg=="); }
+    div.input-container{position: relative;height: 40px}
+    div.input-container #cmd-ph{padding:12px;font-size: 14px;position: absolute;top:0;left: 0;width: 100%;height:100%;box-sizing:border-box;color:#c3c3c3;}
+    div.input-container input#cmd{position:absolute;background:transparent;border:1px solid #000;width: 100%;height:100%;padding: 10px;font-size: 14px;box-sizing:border-box;}
 	div#dump div.error{color:#CC2424;}
 	div#dump div.output{padding-left: 10px}
 	div#dump div.error span{font-weight: bold}
@@ -36,7 +39,10 @@
 		padding: 5px;
 	    font-family: monospace;
 	    font-size: 10px;
-	    background-color: #EAEAEA;
+	    background-color: #E0E0E0;
+        width: 99%;
+        margin: 0 auto;
+        border-radius: 0 0 5px 5px;
 	}
 	div.controls a{
 		color: #545454;
@@ -46,7 +52,10 @@
 	</style>
 </head>
 <body>
-<input type="text" id="cmd"/>
+<div class="input-container">
+    <span id="cmd-ph"></span>
+    <input type="text" id="cmd"/>
+</div>
 <div class="controls">
 	<a id="clearConsole">clear</a>
 </div>
@@ -59,16 +68,43 @@
 	   return (results && results.length > 1) ? results[1] : "";
 	};
 
+    var cmds = { window: [] };
+    var cmdInputPH = document.getElementById('cmd-ph');
 	var cmdInput = document.getElementById('cmd');
 	var outputDiv = document.getElementById('dump');
 	var controls = []
 	var cmdCache = []; var cmdIdx = -1;
+
+    //load windows api list
+    var cmdsBL = ['controls','cmds','cmdInputPH','cmdInput','outputDiv','cmdCache','cmdIdx','evalCmd','getCmdAutocomplete','showOutput','cmdsBL'];
+    Object.getOwnPropertyNames(window).forEach(function (prop) {
+        if(cmdsBL.indexOf(prop) == -1)
+            cmds['window'].push(prop);
+    });
+
+    //hook console
+    window.console.log = function(){
+        var args = Array.prototype.slice.call(arguments);
+        showOutput(args.join(' '));
+    };
 
 	controls['clear'] = document.getElementById('clearConsole');
 
 	controls['clear'].addEventListener("click", function(e){
 		outputDiv.innerHTML = '';
 	});
+
+    cmdInput.addEventListener("keydown", function(e){
+        switch(e.keyCode){
+            case 9: //TAB
+                if(cmdInputPH.innerHTML=='')
+                    return;
+                cmdInput.value = cmdInputPH.innerHTML;
+                cmdInputPH.innerHTML = '';
+                e.preventDefault();
+            break;
+        }
+    });
 
 	cmdInput.addEventListener("keyup", function(e){
 		switch(e.keyCode){
@@ -78,26 +114,48 @@
 				out = evalCmd(cmdInput.value);
 				showOutput(cmdInput.value,out);
 				cmdInput.value = '';
+                cmdInputPH.innerHTML = '';
 			break;
 			case 38: //UP
 				cmdIdx--;
 				if(cmdIdx<0)
 					cmdIdx = -1;
 				cmdInput.value = cmdCache[cmdIdx] ? cmdCache[cmdIdx] : '';
+                cmdInputPH.innerHTML = '';
 			break;
+            case 39: //RIGHT
+                if(cmdInputPH.innerHTML=='')
+                    return;
+                cmdInput.value = cmdInputPH.innerHTML;
+                cmdInputPH.innerHTML = '';
+            break;
 			case 40: //DOWN
 				cmdIdx++;
 				if(cmdIdx>cmdCache.length)
 					cmdIdx = cmdCache.length;
 				cmdInput.value = cmdCache[cmdIdx] ? cmdCache[cmdIdx] : '';
+                cmdInputPH.innerHTML = '';
 			break;
+            default:
+                if(cmdInput.value==''){
+                    cmdInputPH.innerHTML = '';
+                    return;
+                }
+                var item = getCmdAutocomplete(cmdInput.value);
+                cmdInputPH.innerHTML = item;
+            break;
 		}
 	});
+
 	var evalCmd = function(cmd){
+        if(cmd=='')
+            return '';
 		try{
 			cmdCache.push(cmd);
 			cmdIdx = cmdCache.length;
 			out = eval.call(window,cmd);
+            if(/^console/.test(cmd))
+                out = '';
 		}catch(e){
 			out = {
 				error: e.getClassName(),
@@ -106,6 +164,52 @@
 		}
 		return out;
 	}
+
+    var getCmdAutocomplete = function(val){
+        var cmdLevels = val.split('.'), out = [];
+        
+        if(cmdLevels.length > 0){
+            val = cmdLevels.pop();
+            if(cmdLevels[0]=='window'){
+                cmdLevels.shift();
+                out.push('window');
+            }
+        }
+        if(cmdLevels.length > 0){
+            var base = cmdLevels.join('.');
+            if(!cmds[base]){
+                var outC = window;
+                try {
+                    for(cmd of cmdLevels){
+                        outC = outC[cmd];
+                        out.push(cmd);
+                    }
+                }catch(e){ return ''; }
+                cmds[base] = [];
+                for(cmd in outC)
+                    cmds[base].push(cmd);
+            } else{
+                out = out.concat(cmdLevels);
+                cmdLevels = cmds[base];
+            }
+        } else{
+            out = out.concat(cmdLevels);
+            cmdLevels = cmds['window']; 
+        }
+
+        if(val=='')
+            return '';
+        try{
+            var pattern = new RegExp('^'+val);
+            for(cmd of cmdLevels)
+                if(pattern.test(cmd)){
+                    out.push(cmd);
+                    return out.join('.');
+                }
+        }catch(e){}
+        return '';
+    }
+    
 	var showOutput = function(input, output){
 		input = '<div class="input">'+input+'</div>';
 		if(typeof(output) == 'object' && output.error)
