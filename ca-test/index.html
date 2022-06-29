@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>CA SDK Example</title>
+    <style type="text/css">
+      * {
+        box-sizing: border-box;
+        max-width: 100%;
+      }
+
+      body {
+        font: normal 18px/1.5 "Fira Sans", "Helvetica Neue", sans-serif;
+        padding: 0;
+      }
+
+      .container {
+        width: 80%;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .container * {
+        box-sizing: border-box;
+      }
+
+      .flex-outer,
+      .flex-inner {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      .flex-outer {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .flex-outer li,
+      .flex-inner {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .flex-inner {
+        padding: 0 8px;
+        justify-content: space-between;
+      }
+
+      .flex-outer > li:not(:last-child) {
+        margin-bottom: 20px;
+      }
+
+      .flex-outer li label,
+      .flex-outer li p {
+        padding: 8px;
+        font-weight: 300;
+        letter-spacing: .09em;
+        text-transform: uppercase;
+      }
+
+      .flex-outer > li > label,
+      .flex-outer li p {
+        flex: 1 0 120px;
+        max-width: 220px;
+      }
+
+      .flex-outer > li > label + *,
+      .flex-inner {
+        flex: 1 0 220px;
+      }
+
+      .flex-outer li p {
+        margin: 0;
+      }
+
+      .flex-outer li input:not([type='checkbox']),
+      .flex-outer li textarea {
+        padding: 15px;
+        min-height: 200px;
+        border: 1px solid #333;
+        width: 100%;
+      }
+
+      .flex-outer li button {
+        margin-left: auto;
+        padding: 8px 16px;
+        border: none;
+        background: #333;
+        color: #f2f2f2;
+        text-transform: uppercase;
+        letter-spacing: .09em;
+        border-radius: 2px;
+      }
+
+      .flex-inner li {
+        width: 100px;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 400px auto;
+      }
+
+      #sdk-iframe {
+        width: 100%;
+        height: 100vh;
+      }
+    </style>
+    <script src="sdk.umd.js"></script>
+  </head>
+  <body>
+    <div class="layout">
+      <div>
+        <strong>CA SDK version: <span id="version"></span></strong>
+        <form class="container" onsubmit="handleSubmit(event)">
+          <ul class="flex-outer">
+            <li>
+              <label for="defaults">Default Options</label>
+              <textarea id="defaults" data-init="false"></textarea>
+            </li>
+            <li>
+              <button type="button" onclick="handleDefaults()">Update Defaults</button>
+            </li>
+            <li>
+              <label for="initOptions">Init Options</label>
+              <span>persistent-footer or footer or pop-up</span>
+              <textarea id="initOptions"></textarea>
+            </li>
+            <li>
+              <button type="button" onclick="handleInit()">Init</button>
+              <button type="button" onclick="handleOpen()">Open</button>
+            </li>
+          </ul>
+        </form>
+      </div>
+      <iframe id="sdk-iframe" src="example.iframe.html"></iframe>
+    </div>
+    <script>
+      document.getElementById('version').innerHTML = CA.version;
+      const sdkIframe = document.getElementById('sdk-iframe');
+
+      const defaultsTextarea = document.getElementById('defaults');
+      const initOptionsTextarea = document.getElementById('initOptions');
+      const defaults = {
+        fetchUrl: 'http://questionnaire.master.ra.testing.customer-alliance.com/ca/embedded/{questionnaireID}/fetch?_locale={locale}',
+        submitUrl: 'http://questionnaire.master.ra.testing.customer-alliance.com/ca/embedded/{questionnaireID}/submit?_locale={locale}'
+      };
+      const initOptions = {
+        type: 'pop-up',
+        primaryColor: '#3B62B2',
+        primaryTextColor: 'white',
+        showPromotion: true,
+        frequency: {
+          answered: 4,
+          closed: 3,
+        },
+        trigger: 'manual',
+        ratingType: 'button',
+        questionnaireID: 'h7ngiz0nno4jnwzvzgxdnlidclzo7eyf51zfuag2b6olzeso',
+        attributes: {
+          someField: 'some value here'
+        }
+      };
+      defaultsTextarea.innerHTML = JSON.stringify(defaults, undefined, 4);
+      initOptionsTextarea.innerHTML = JSON.stringify(initOptions, undefined, 4);
+
+      function handleDefaults() {
+        sdkIframe.contentWindow.CA.setDefaults(JSON.parse(defaultsTextarea.value));
+        defaultsTextarea.setAttribute('data-init', 'true');
+      }
+
+      function handleInit() {
+        sdkIframe.contentWindow.CA.remove();
+
+        if (defaultsTextarea.getAttribute('data-init') === 'false') {
+          handleDefaults();
+        }
+
+        sdkIframe.contentWindow.CA.init(JSON.parse(initOptionsTextarea.value));
+      }
+
+      function handleOpen() {
+        sdkIframe.contentWindow.CA.open();
+      }
+    </script>
+  </body>
+</html>
