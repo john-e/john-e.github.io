@@ -645,6 +645,12 @@
         if (!options.frequency) {
             options.frequency = __assign$4({}, defaults$1.frequency);
         }
+        if (options.frequency.answered === OldFrequency.Once) {
+            options.frequency.answered = MAX_DEFAULT_DAYS;
+        }
+        if (options.frequency.closed === OldFrequency.Once) {
+            options.frequency.closed = MAX_DEFAULT_DAYS;
+        }
         if (!((_a = options.frequency) === null || _a === void 0 ? void 0 : _a.answered) || !is$1(Number, options.frequency.answered)) {
             options.frequency = __assign$4(__assign$4({}, options.frequency), { answered: defaults$1.frequency.answered });
         }
@@ -8736,15 +8742,20 @@
         var isSubQuestion = key === null || key === void 0 ? void 0 : key.includes('subquestion_');
         var value = isSubQuestion ? (_b = context[parent]) === null || _b === void 0 ? void 0 : _b.answer : currentEvent.value;
         if (value && values && Array.isArray(values)) {
+            if (Array.isArray(value)) {
+                var answers_1 = new Set(value);
+                return values.some(function (val) { return answers_1.has(val); });
+            }
             return values.includes(value);
         }
         return false;
     };
     var contextValueNotEmpty = function (context, event, _a) {
         var cond = _a.cond;
-        var value = cond.value;
-        var answer = (context[value] || {}).answer;
-        if (!context[value] || !answer) {
+        var _b = cond, subQuestion = _b.subQuestion; _b.parent;
+        var answer = (context[subQuestion] || {}).answer;
+        console.log({ context: context });
+        if (!context[subQuestion] || !answer) {
             return false;
         }
         if (typeof answer === 'string' || Array.isArray(answer)) {
@@ -8761,6 +8772,7 @@
     function createState(questions, endState) {
         var context = {};
         var states = {};
+        var lastQuestion = generateQuestionName(1);
         var lastSubQuestions = [];
         questions.forEach(function (question, i) {
             var realQuestion = question.question;
@@ -8792,7 +8804,7 @@
                 if (lastSubQuestions.length > 0) {
                     states[questionName].on.PREVIOUS = __spreadArray$3(__spreadArray$3([], lastSubQuestions.map(function (lastSubQuestion) { return ({
                         target: lastSubQuestion,
-                        cond: { type: 'contextValueNotEmpty', value: lastSubQuestion },
+                        cond: { type: 'contextValueNotEmpty', subQuestion: lastSubQuestion, parent: lastQuestion },
                         actions: ['unsave'],
                     }); }), true), [
                         { target: prevQuestionName, actions: ['unsave'] },
@@ -8815,6 +8827,7 @@
                     };
                     states[nextSubQuestionName] = {
                         meta: subQuestion,
+                        condition: subQuestionSet.values,
                         on: {
                             NEXT: originalPath,
                             PREVIOUS: {
@@ -8832,7 +8845,7 @@
                 states[questionName].on.NEXT = __spreadArray$3(__spreadArray$3([], subQuestionEvents, true), [
                     originalPath,
                 ], false);
-                lastSubQuestions = lastSubQuestions.reverse();
+                lastSubQuestions.reverse();
                 subQuestionEvents.forEach(function (sqe, ind) {
                     states[sqe.target].on.NEXT = states[questionName].on.NEXT.slice(ind + 1);
                     states[sqe.target].on.PREVIOUS = __spreadArray$3(__spreadArray$3([], lastSubQuestions.map(function (lastSubQuestion) {
@@ -8841,7 +8854,7 @@
                         if (subquestionNumber > currentSubquestionNumber && sqe.target !== lastSubQuestion) {
                             return {
                                 target: lastSubQuestion,
-                                cond: { type: 'contextValueNotEmpty', value: lastSubQuestion },
+                                cond: { type: 'contextValueNotEmpty', subQuestion: lastSubQuestion, parent: questionName },
                                 actions: ['unsave'],
                             };
                         }
@@ -8851,6 +8864,7 @@
                     ], false).filter(function (a) { return a !== undefined; });
                 });
             }
+            lastQuestion = questionName;
         });
         var contextKeys = Object.keys(context);
         // set last event to submit
@@ -8919,6 +8933,7 @@
     function generate(id, questions) {
         var _a = createState(questions, 'submitting'), context = _a.context, states = _a.states;
         var lastQuestion = Object.keys(context).reverse().find(function (value) { return !value.includes('subquestion_'); }) || '';
+        console.log(states);
         return createMachine({
             id: "ca_questionaire_".concat(id),
             initial: 'loading',
@@ -12361,6 +12376,14 @@
         if (!isLessThanThree) {
             register(name, { required: required ? 'validation.choice.required' : false });
         }
+        y(function () {
+            setTimeout(function () {
+                if (answer) {
+                    setValue(name, answer);
+                }
+            }, 0);
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, []);
         var onChangeValue = A$1(function (data) {
             setValue(name, data);
         }, [name, setValue]);
@@ -12506,7 +12529,7 @@
                         ReactDOM.createElement(CustomerAllianceApp, null))))), parent);
     }
 
-    var revision = "24ebb77" ;
+    var revision = "b59be9f" ;
     var randomID = "CA-questionnaire-".concat(genID());
     var defaults;
     var params;
@@ -12537,7 +12560,6 @@
         params = process(__assign$4(__assign$4(__assign$4({}, params), otherOptions), { fetchUrl: fillValues(fetchUrl, options), submitUrl: fillValues(submitUrl, options) }));
         // eslint-disable-next-line @typescript-eslint/no-use-before-define
         setupTrigger(params.trigger);
-        console.log(params);
     }
     function open(questionnaireID) {
         if (questionnaireID === void 0) { questionnaireID = null; }
