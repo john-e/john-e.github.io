@@ -285,7 +285,7 @@
 
     var api = init$2(defaultConverter, { path: '/' });
 
-    var version = "1.1.8";
+    var version = "1.2.0";
 
     function _isPlaceholder(a) {
       return a != null && typeof a === 'object' && a['@@functional/placeholder'] === true;
@@ -8733,14 +8733,14 @@
         });
     }
 
-    var atLeastOneValueMatches = function (context, event, _a) {
-        var _b;
-        var cond = _a.cond;
+    var atLeastOneValueMatches = function (context, event, condMeta) {
+        var _a;
+        var cond = condMeta.cond;
         var currentEvent = event;
-        var _c = cond, values = _c.values, parent = _c.parent;
+        var _b = cond, values = _b.values, parent = _b.parent;
         var key = currentEvent.key;
         var isSubQuestion = key === null || key === void 0 ? void 0 : key.includes('subquestion_');
-        var value = isSubQuestion ? (_b = context[parent]) === null || _b === void 0 ? void 0 : _b.answer : currentEvent.value;
+        var value = isSubQuestion ? (_a = context[parent]) === null || _a === void 0 ? void 0 : _a.answer : currentEvent.value;
         if (value && values && Array.isArray(values)) {
             if (Array.isArray(value)) {
                 var answers_1 = new Set(value);
@@ -8750,23 +8750,24 @@
         }
         return false;
     };
-    var contextValueNotEmpty = function (context, event, _a) {
-        var cond = _a.cond;
-        var _b = cond, subQuestion = _b.subQuestion; _b.parent;
-        var answer = (context[subQuestion] || {}).answer;
-        console.log({ context: context });
-        if (!context[subQuestion] || !answer) {
+    var contextValueNotEmpty = function (context, event, condMeta) {
+        var _a, _b, _c, _d;
+        var cond = condMeta.cond, state = condMeta.state;
+        var _e = cond, subQuestion = _e.subQuestion, parent = _e.parent;
+        var answer = (context[parent] || {}).answer;
+        if (!subQuestion || !parent || !answer) {
             return false;
         }
-        if (typeof answer === 'string' || Array.isArray(answer)) {
-            return answer.length > 0;
+        var conditionValues = (_d = (_c = (_b = (_a = state === null || state === void 0 ? void 0 : state.machine) === null || _a === void 0 ? void 0 : _a.states) === null || _b === void 0 ? void 0 : _b[subQuestion]) === null || _c === void 0 ? void 0 : _c.config) === null || _d === void 0 ? void 0 : _d.condition;
+        if (!conditionValues) {
+            return false;
         }
-        if (typeof answer === 'object'
-            && !Array.isArray(answer)
-            && answer !== null) {
-            return Object.keys(answer).length > 0;
-        }
-        return false;
+        var newEvent = { key: subQuestion, value: answer };
+        var newCondMeta = __assign$4(__assign$4({}, condMeta), { cond: {
+                parent: parent,
+                values: conditionValues,
+            } });
+        return atLeastOneValueMatches(context, newEvent, newCondMeta);
     };
 
     function createState(questions, endState) {
@@ -8933,7 +8934,6 @@
     function generate(id, questions) {
         var _a = createState(questions, 'submitting'), context = _a.context, states = _a.states;
         var lastQuestion = Object.keys(context).reverse().find(function (value) { return !value.includes('subquestion_'); }) || '';
-        console.log(states);
         return createMachine({
             id: "ca_questionaire_".concat(id),
             initial: 'loading',
@@ -12529,7 +12529,7 @@
                         ReactDOM.createElement(CustomerAllianceApp, null))))), parent);
     }
 
-    var revision = "b59be9f" ;
+    var revision = "11e712e" ;
     var randomID = "CA-questionnaire-".concat(genID());
     var defaults;
     var params;
