@@ -651,10 +651,10 @@
         if (options.frequency.closed === OldFrequency.Once) {
             options.frequency.closed = MAX_DEFAULT_DAYS;
         }
-        if (!((_a = options.frequency) === null || _a === void 0 ? void 0 : _a.answered) || !is$1(Number, options.frequency.answered)) {
+        if (Number.isNaN((_a = options.frequency) === null || _a === void 0 ? void 0 : _a.answered)) {
             options.frequency = __assign$4(__assign$4({}, options.frequency), { answered: defaults$1.frequency.answered });
         }
-        if (!((_b = options.frequency) === null || _b === void 0 ? void 0 : _b.closed) || !is$1(Number, options.frequency.closed)) {
+        if (Number.isNaN((_b = options.frequency) === null || _b === void 0 ? void 0 : _b.closed)) {
             options.frequency = __assign$4(__assign$4({}, options.frequency), { closed: defaults$1.frequency.closed });
         }
         if (options.frequency.answered > MAX_DEFAULT_DAYS) {
@@ -12529,7 +12529,7 @@
                         ReactDOM.createElement(CustomerAllianceApp, null))))), parent);
     }
 
-    var revision = "11e712e" ;
+    var revision = "dd86433" ;
     var randomID = "CA-questionnaire-".concat(genID());
     var defaults;
     var params;
