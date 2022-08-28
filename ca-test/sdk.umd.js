@@ -8864,18 +8864,19 @@
                     NEXT: originalPath,
                 },
             };
+            states[questionName].on.SAVE = {
+                actions: ['save'],
+            };
             if (prevQuestionName) {
                 states[questionName].on.PREVIOUS = {
                     target: prevQuestionName,
-                    actions: ['unsave'],
                 };
                 if (lastSubQuestions.length > 0) {
                     states[questionName].on.PREVIOUS = __spreadArray$3(__spreadArray$3([], lastSubQuestions.map(function (lastSubQuestion) { return ({
                         target: lastSubQuestion,
                         cond: { type: 'contextValueNotEmpty', subQuestion: lastSubQuestion, parent: lastQuestion },
-                        actions: ['unsave'],
                     }); }), true), [
-                        { target: prevQuestionName, actions: ['unsave'] },
+                        { target: prevQuestionName },
                     ], false);
                     lastSubQuestions = [];
                 }
@@ -8900,7 +8901,6 @@
                             NEXT: originalPath,
                             PREVIOUS: {
                                 target: questionName,
-                                actions: ['unsave'],
                             },
                         },
                     };
@@ -8923,12 +8923,11 @@
                             return {
                                 target: lastSubQuestion,
                                 cond: { type: 'contextValueNotEmpty', subQuestion: lastSubQuestion, parent: questionName },
-                                actions: ['unsave'],
                             };
                         }
                         return undefined;
                     }), true), [
-                        { target: questionName, actions: ['unsave'] },
+                        { target: questionName, actions: ['save'] },
                     ], false).filter(function (a) { return a !== undefined; });
                 });
             }
@@ -12559,6 +12558,20 @@
         y(function () {
             methods.reset();
         }, [current.value, methods]);
+        y(function () {
+            var subscription = methods.watch(function (data, _a) {
+                var _b = _a.name, name = _b === void 0 ? '' : _b, type = _a.type;
+                if (type === 'change') {
+                    var value = data[name];
+                    send({
+                        type: 'SAVE',
+                        key: current.value,
+                        value: value,
+                    });
+                }
+            });
+            return function () { return subscription.unsubscribe(); };
+        }, [methods, current.value, send]);
         // trigger submit once
         y(function () {
             if (isSubmitting && questions && submitUrl) {
@@ -12630,7 +12643,7 @@
                         ReactDOM.createElement(CustomerAllianceApp, null))))), parent);
     }
 
-    var revision = "153a6f7" ;
+    var revision = "19082d9" ;
     var randomID = "CA-questionnaire-".concat(genID());
     var defaults;
     var params;
