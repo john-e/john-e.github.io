@@ -8881,54 +8881,62 @@
                     lastSubQuestions = [];
                 }
             }
-            // works with one only sub question
             if (hasSubQuestions) {
                 var subQuestionEvents = question.sub_element_conditions.map(function (subQuestionSet, j) {
-                    var _a, _b;
-                    var nextSubQuestionName = generateQuestionName(j + 1, "".concat(questionName, "_sub"));
-                    lastSubQuestions.push(nextSubQuestionName);
-                    // set sub question in context
-                    var subQuestion = (_a = subQuestionSet.elements) === null || _a === void 0 ? void 0 : _a[0];
-                    var subQuestionId = (_b = subQuestion === null || subQuestion === void 0 ? void 0 : subQuestion.question) === null || _b === void 0 ? void 0 : _b.id;
-                    context[nextSubQuestionName] = {
-                        id: "".concat(subQuestionId),
-                        answer: null,
-                    };
-                    states[nextSubQuestionName] = {
-                        meta: subQuestion,
-                        condition: subQuestionSet.values,
-                        on: {
-                            NEXT: originalPath,
-                            PREVIOUS: {
-                                target: questionName,
-                            },
-                        },
-                    };
-                    return {
-                        target: nextSubQuestionName || endState,
-                        cond: { type: 'atLeastOneValueMatches', values: subQuestionSet.values, parent: questionName },
-                        actions: ['save'],
-                    };
+                    var arr = [];
+                    if (Array.isArray(subQuestionSet.elements)) {
+                        subQuestionSet.elements.forEach(function (subQuestion, subQuestionIndex) {
+                            var _a;
+                            var nextSubQuestionName = generateQuestionName(j + subQuestionIndex + 1, "".concat(questionName, "_sub"));
+                            lastSubQuestions.push(nextSubQuestionName);
+                            var subQuestionId = (_a = subQuestion.question) === null || _a === void 0 ? void 0 : _a.id;
+                            context[nextSubQuestionName] = {
+                                id: "".concat(subQuestionId),
+                                answer: null,
+                            };
+                            states[nextSubQuestionName] = {
+                                meta: subQuestion,
+                                condition: subQuestionSet.values,
+                                on: {
+                                    NEXT: originalPath,
+                                    PREVIOUS: {
+                                        target: questionName,
+                                        actions: ['save'],
+                                    },
+                                },
+                            };
+                            arr.push({
+                                target: nextSubQuestionName || endState,
+                                cond: { type: 'atLeastOneValueMatches', values: subQuestionSet.values, parent: questionName },
+                                actions: ['save'],
+                            });
+                        });
+                    }
+                    return arr;
                 });
-                states[questionName].on.NEXT = __spreadArray$3(__spreadArray$3([], subQuestionEvents, true), [
+                states[questionName].on.NEXT = __spreadArray$3(__spreadArray$3([], subQuestionEvents[0], true), [
                     originalPath,
                 ], false);
                 lastSubQuestions.reverse();
-                subQuestionEvents.forEach(function (sqe, ind) {
-                    states[sqe.target].on.NEXT = states[questionName].on.NEXT.slice(ind + 1);
-                    states[sqe.target].on.PREVIOUS = __spreadArray$3(__spreadArray$3([], lastSubQuestions.map(function (lastSubQuestion) {
-                        var subquestionNumber = sqe.target.split('subquestion_').length !== 1 ? parseInt(sqe.target.split('subquestion_')[1], 10) : 1;
-                        var currentSubquestionNumber = lastSubQuestion.split('subquestion_').length !== 1 ? parseInt(lastSubQuestion.split('subquestion_')[1], 10) : 0;
-                        if (subquestionNumber > currentSubquestionNumber && sqe.target !== lastSubQuestion) {
-                            return {
-                                target: lastSubQuestion,
-                                cond: { type: 'contextValueNotEmpty', subQuestion: lastSubQuestion, parent: questionName },
-                            };
-                        }
-                        return undefined;
-                    }), true), [
-                        { target: questionName, actions: ['save'] },
-                    ], false).filter(function (a) { return a !== undefined; });
+                subQuestionEvents.forEach(function (item) {
+                    item.forEach(function (sqe, ind) {
+                        states[sqe.target].on.NEXT = states[questionName].on.NEXT.slice(ind + 1);
+                        states[sqe.target].on.PREVIOUS = __spreadArray$3(__spreadArray$3([], lastSubQuestions.map(function (lastSubQuestion) {
+                            var _a;
+                            var subquestionNumber = ((_a = sqe === null || sqe === void 0 ? void 0 : sqe.target) === null || _a === void 0 ? void 0 : _a.split('subquestion_').length) !== 1 ? parseInt(sqe.target.split('subquestion_')[1], 10) : 1;
+                            var currentSubquestionNumber = lastSubQuestion.split('subquestion_').length !== 1 ? parseInt(lastSubQuestion.split('subquestion_')[1], 10) : 0;
+                            if (subquestionNumber > currentSubquestionNumber && sqe.target !== lastSubQuestion) {
+                                return {
+                                    target: lastSubQuestion,
+                                    cond: { type: 'contextValueNotEmpty', subQuestion: lastSubQuestion, parent: questionName },
+                                    actions: ['save'],
+                                };
+                            }
+                            return undefined;
+                        }), true), [
+                            { target: questionName, actions: ['save'] },
+                        ], false).filter(function (a) { return a !== undefined; });
+                    });
                 });
             }
             lastQuestion = questionName;
@@ -9220,7 +9228,7 @@
      * @returns boolean
      */
     function useIsNextSubQuestion(formContext) {
-        var _a, _b, _c, _d;
+        var _a, _b, _c, _d, _e, _f;
         var context = useFormContext();
         var watch = (formContext || context).watch;
         var surveyService = useSurveyService();
@@ -9248,8 +9256,10 @@
         // filter out current subquestion
         if (isSubQuestion) {
             var questionNumber_1 = Number(questionName.replace("".concat(lastQuestionName, "_subquestion_"), ''));
-            subQuestions = subQuestions.filter(function (_, i) { return !(i < questionNumber_1); });
-            // overwrite question name
+            // To check if any more subquestions are left
+            if (((_f = (_e = subQuestions[0]) === null || _e === void 0 ? void 0 : _e.elements) === null || _f === void 0 ? void 0 : _f.filter(function (_, i) { return !(i < questionNumber_1); }).length) === 0) {
+                subQuestions = [];
+            }
             questionName = lastQuestionName;
         }
         return subQuestions.some(function (_a) {
@@ -9277,7 +9287,10 @@
         var metaId = "".concat(machineId, ".").concat(current.value);
         var question = (_b = current.meta[metaId]) === null || _b === void 0 ? void 0 : _b.question;
         var required = ((_c = question === null || question === void 0 ? void 0 : question.validation) === null || _c === void 0 ? void 0 : _c.required) || false;
-        return (!isNextSubQuestion || !required) && (current.nextEvents.includes('SUBMIT') || current.nextEvents.includes('RETRY'));
+        if (isNextSubQuestion && required) {
+            return false;
+        }
+        return !isNextSubQuestion && (current.nextEvents.includes('SUBMIT') || current.nextEvents.includes('RETRY'));
     }
 
     /* eslint-disable @typescript-eslint/no-unsafe-call */
@@ -10427,7 +10440,7 @@
         '1:5': ["\uD83D\uDE21", "\uD83D\uDE24", "\uD83D\uDE10", "\uD83D\uDE0A", "\uD83D\uDE0D"],
     };
 
-    var css_248z$7 = ".rating_rating-container__Tj2-D {\n  display: flex;\n  flex-direction: column;\n}\n.rating_rating-container__Tj2-D .rating_labels__nLkgq {\n  margin-top: 16px;\n  display: flex;\n  justify-content: space-between;\n  font-family: \"Open Sans\", sans-serif;\n  font-style: normal;\n  font-weight: 600;\n  font-size: 14px;\n  line-height: 20px;\n  color: #2d3239;\n}\n\n.rating_rating__M-1m9 {\n  display: flex;\n  gap: 4px;\n}\n\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU {\n  width: 32px;\n  height: 32px;\n  position: relative;\n  cursor: pointer;\n  display: flex;\n  flex: 1;\n  justify-content: center;\n  align-items: center;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio],\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU span,\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU span::after {\n  position: absolute;\n  top: 0;\n  right: 0;\n  width: 100%;\n  height: 100%;\n  cursor: pointer;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU span {\n  text-align: center;\n  line-height: 32px;\n  border-radius: 4px;\n  z-index: 0;\n  font-family: \"Open Sans\", sans-serif;\n  font-style: normal;\n  font-weight: 400;\n  font-size: 12px;\n  color: #2d3239;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU span::after {\n  content: \"\";\n  display: block;\n  box-sizing: border-box;\n  max-width: 100%;\n  border-radius: 4px;\n  border: 1px solid transparent;\n  z-index: -1;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU span:not(.rating_emoji__DRdop) {\n  background: #f6f7f9;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU span:not(:empty):not(.rating_emoji__DRdop)::after {\n  border-color: #e2e5e9;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU .rating_emoji__DRdop {\n  font-family: serif;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio] {\n  /* Remove most all native input styles */\n  -webkit-appearance: none;\n     -moz-appearance: none;\n          appearance: none;\n  /* For iOS < 15 */\n  background-color: transparent;\n  /* Not removed via appearance */\n  margin: 0;\n  outline: none;\n  z-index: 1;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:focus-visible + span::after {\n  border: 2px solid var(--ca-primary-background-400);\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:hover + span::after {\n  background: #e2e5e9;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:focus + span::after {\n  border: 2px solid var(--ca-primary-background-400);\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:checked ~ svg path {\n  fill: var(--ca-primary-background-300);\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:checked + span::after {\n  background: var(--ca-primary-background-300);\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:checked + span:not(:empty)::after {\n  border: 0;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU span:empty,\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU span:empty::after {\n  background: transparent !important;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU .rating_rating-icon-default__29M74,\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU .rating_rating-icon-hover__ME6tu {\n  color: #9ba5b0;\n  z-index: 0;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU .rating_rating-icon-hover__ME6tu,\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:hover ~ .rating_rating-icon-default__29M74,\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:checked ~ .rating_rating-icon-default__29M74 {\n  display: none;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:hover ~ .rating_rating-icon-hover__ME6tu,\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:checked ~ .rating_rating-icon-hover__ME6tu {\n  display: block;\n}";
+    var css_248z$7 = ".rating_rating-container__Tj2-D {\n  display: flex;\n  flex-direction: column;\n}\n.rating_rating-container__Tj2-D .rating_labels__nLkgq {\n  margin-top: 16px;\n  display: flex;\n  justify-content: space-between;\n  font-family: \"Open Sans\", sans-serif;\n  font-style: normal;\n  font-weight: 600;\n  font-size: 14px;\n  line-height: 20px;\n  color: #2d3239;\n}\n.rating_rating-container__Tj2-D .rating_labels__nLkgq span:nth-child(2) {\n  text-align: right;\n}\n\n.rating_rating__M-1m9 {\n  display: flex;\n  gap: 4px;\n}\n\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU {\n  width: 32px;\n  height: 32px;\n  position: relative;\n  cursor: pointer;\n  display: flex;\n  flex: 1;\n  justify-content: center;\n  align-items: center;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio],\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU span,\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU span::after {\n  position: absolute;\n  top: 0;\n  right: 0;\n  width: 100%;\n  height: 100%;\n  cursor: pointer;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU span {\n  text-align: center;\n  line-height: 32px;\n  border-radius: 4px;\n  z-index: 0;\n  font-family: \"Open Sans\", sans-serif;\n  font-style: normal;\n  font-weight: 400;\n  font-size: 12px;\n  color: #2d3239;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU span::after {\n  content: \"\";\n  display: block;\n  box-sizing: border-box;\n  max-width: 100%;\n  border-radius: 4px;\n  border: 1px solid transparent;\n  z-index: -1;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU span:not(.rating_emoji__DRdop) {\n  background: #f6f7f9;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU span:not(:empty):not(.rating_emoji__DRdop)::after {\n  border-color: #e2e5e9;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU .rating_emoji__DRdop {\n  font-family: serif;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio] {\n  /* Remove most all native input styles */\n  -webkit-appearance: none;\n     -moz-appearance: none;\n          appearance: none;\n  /* For iOS < 15 */\n  background-color: transparent;\n  /* Not removed via appearance */\n  margin: 0;\n  outline: none;\n  z-index: 1;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:focus-visible + span::after {\n  border: 2px solid var(--ca-primary-background-400);\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:hover + span::after {\n  background: #e2e5e9;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:focus + span::after {\n  border: 2px solid var(--ca-primary-background-400);\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:checked ~ svg path {\n  fill: var(--ca-primary-background-300);\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:checked + span::after {\n  background: var(--ca-primary-background-300);\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:checked + span:not(:empty)::after {\n  border: 0;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU span:empty,\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU span:empty::after {\n  background: transparent !important;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU .rating_rating-icon-default__29M74,\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU .rating_rating-icon-hover__ME6tu {\n  color: #9ba5b0;\n  z-index: 0;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU .rating_rating-icon-hover__ME6tu,\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:hover ~ .rating_rating-icon-default__29M74,\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:checked ~ .rating_rating-icon-default__29M74 {\n  display: none;\n}\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:hover ~ .rating_rating-icon-hover__ME6tu,\n.rating_rating__M-1m9 .rating_radiobutton__LV-CU input[type=radio]:checked ~ .rating_rating-icon-hover__ME6tu {\n  display: block;\n}";
     var styles$7 = {"rating-container":"rating_rating-container__Tj2-D","labels":"rating_labels__nLkgq","rating":"rating_rating__M-1m9","radiobutton":"rating_radiobutton__LV-CU","emoji":"rating_emoji__DRdop","rating-icon-default":"rating_rating-icon-default__29M74","rating-icon-hover":"rating_rating-icon-hover__ME6tu"};
     styleInject(css_248z$7);
 
@@ -12643,7 +12656,7 @@
                         ReactDOM.createElement(CustomerAllianceApp, null))))), parent);
     }
 
-    var revision = "19082d9" ;
+    var revision = "9ec1741" ;
     var randomID = "CA-questionnaire-".concat(genID());
     var defaults;
     var params;
