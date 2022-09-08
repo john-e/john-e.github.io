@@ -8864,19 +8864,18 @@
                     NEXT: originalPath,
                 },
             };
-            states[questionName].on.SAVE = {
-                actions: ['save'],
-            };
             if (prevQuestionName) {
                 states[questionName].on.PREVIOUS = {
                     target: prevQuestionName,
+                    actions: ['save'],
                 };
                 if (lastSubQuestions.length > 0) {
                     states[questionName].on.PREVIOUS = __spreadArray$3(__spreadArray$3([], lastSubQuestions.map(function (lastSubQuestion) { return ({
                         target: lastSubQuestion,
                         cond: { type: 'contextValueNotEmpty', subQuestion: lastSubQuestion, parent: lastQuestion },
+                        actions: ['save'],
                     }); }), true), [
-                        { target: prevQuestionName },
+                        { target: prevQuestionName, actions: ['save'] },
                     ], false);
                     lastSubQuestions = [];
                 }
@@ -9278,28 +9277,77 @@
             });
         });
     }
+    /**
+     * Checks the question has all answer linked to a sub-question and return true is matches else false
+     * @returns boolean
+     */
+    function useAllOptionsWithSubquestion() {
+        var _a, _b, _c, _d, _e;
+        var surveyService = useSurveyService();
+        var current = useActor(surveyService)[0];
+        var machineId = (_a = current === null || current === void 0 ? void 0 : current.machine) === null || _a === void 0 ? void 0 : _a.id;
+        var metaId = "".concat(machineId, ".").concat(current.value);
+        var meta = current.meta[metaId];
+        var question = meta === null || meta === void 0 ? void 0 : meta.question;
+        var questionName = current.value;
+        var isSubQuestion = questionName.includes('subquestion_');
+        if (!isSubQuestion && (question === null || question === void 0 ? void 0 : question.type) === 'rating') {
+            var ratingQuestion = question;
+            var max = (_c = (_b = ratingQuestion === null || ratingQuestion === void 0 ? void 0 : ratingQuestion.rating_scale) === null || _b === void 0 ? void 0 : _b.max) === null || _c === void 0 ? void 0 : _c.value;
+            var min_1 = (_e = (_d = ratingQuestion === null || ratingQuestion === void 0 ? void 0 : ratingQuestion.rating_scale) === null || _d === void 0 ? void 0 : _d.min) === null || _e === void 0 ? void 0 : _e.value;
+            var options_1 = Array.from({ length: Number(max) + 1 - Number(min_1) }, function (_, i) { return String(Number(min_1) === 0 ? i : i + 1); });
+            var subQuestions = ((meta === null || meta === void 0 ? void 0 : meta.sub_element_conditions) || []);
+            subQuestions.every(function (el) {
+                if (!options_1.length) {
+                    return false;
+                }
+                el.values.every(function (val) {
+                    if (options_1.length) {
+                        var index = options_1.findIndex(function (item) { return item === val; });
+                        if (index !== -1) {
+                            options_1.splice(index, 1);
+                        }
+                        return true;
+                    }
+                    return false;
+                });
+                return true;
+            });
+            // if all the options are deleted then every answer has subquestion
+            return !options_1.length;
+        }
+        return false;
+    }
     function useCanSubmit(formContext) {
-        var _a, _b, _c;
+        var _a, _b;
         var surveyService = useSurveyService();
         var current = useActor(surveyService)[0];
         var isNextSubQuestion = useIsNextSubQuestion(formContext);
+        var allOptionsWithSubquestion = useAllOptionsWithSubquestion();
         var machineId = (_a = current === null || current === void 0 ? void 0 : current.machine) === null || _a === void 0 ? void 0 : _a.id;
         var metaId = "".concat(machineId, ".").concat(current.value);
-        var question = (_b = current.meta[metaId]) === null || _b === void 0 ? void 0 : _b.question;
-        var required = ((_c = question === null || question === void 0 ? void 0 : question.validation) === null || _c === void 0 ? void 0 : _c.required) || false;
+        var meta = current.meta[metaId];
+        var question = meta === null || meta === void 0 ? void 0 : meta.question;
+        var questionName = current.value;
+        var required = ((_b = question === null || question === void 0 ? void 0 : question.validation) === null || _b === void 0 ? void 0 : _b.required) || false;
+        var lastQuestionName = _(function () { return Object.keys(current.context)
+            .reverse().find(function (value) { return !value.includes('subquestion_'); }); }, [current.context]);
+        var isLastQuestion = questionName.startsWith(lastQuestionName);
         if (isNextSubQuestion && required) {
             return false;
+        }
+        if (isLastQuestion && required) {
+            return !allOptionsWithSubquestion;
         }
         return !isNextSubQuestion && (current.nextEvents.includes('SUBMIT') || current.nextEvents.includes('RETRY'));
     }
 
-    /* eslint-disable @typescript-eslint/no-unsafe-call */
     function Actions() {
         var params = useSDKContext().params;
+        var register = useFormContext().register;
         var t = useTranslations();
         var isPersistent = (params === null || params === void 0 ? void 0 : params.type) === 'persistent-footer';
         var surveyService = useSurveyService();
-        var send = surveyService.send;
         var current = useActor(surveyService)[0];
         var isSubmitting = current.value === 'submitting';
         var isSubmitted = current.value === 'submitted';
@@ -9313,15 +9361,12 @@
         var onClose = function () {
             emitter.emit(isPersistent && !isSubmitted ? 'hide' : 'close');
         };
-        var onBack = function () {
-            send({ type: 'PREVIOUS', key: current.value });
-        };
         return (ReactDOM.createElement(ReactDOM.Fragment, null,
             (isSubQuestion || isSubmitError || isSubmitted || !isFirstQuestion) && ReactDOM.createElement("span", null),
             ((!isSubQuestion && !isSubmitError && isFirstQuestion) || isSubmitted) && (ReactDOM.createElement(Button, { onClick: onClose, variant: isSubmitted ? 'primary' : 'base' }, t('close'))),
             !isSubmitted && (ReactDOM.createElement("div", null,
-                (isSubQuestion || isSubmitError || !isFirstQuestion) && ReactDOM.createElement(Button, { onClick: onBack }, t('back')),
-                !isSubmitted && ReactDOM.createElement(Button, { type: "submit", variant: "primary" }, t(canSubmit ? 'submit' : 'next'))))));
+                (isSubQuestion || isSubmitError || !isFirstQuestion) && ReactDOM.createElement(Button, __assign$4({ type: "submit" }, register('action'), { value: "back" }), t('back')),
+                !isSubmitted && ReactDOM.createElement(Button, __assign$4({ type: "submit", variant: "primary" }, register('action'), { value: "next" }), t(canSubmit ? 'submit' : 'next'))))));
     }
 
     var ErrorBoundary = /** @class */ (function (_super) {
@@ -12538,6 +12583,7 @@
     }
 
     function CustomerAllianceApp() {
+        var _this = this;
         var _a, _b, _c, _d, _e, _f, _g, _h, _j;
         var t = useTranslations();
         var _k = useSDKContext(), params = _k.params, questions = _k.questions;
@@ -12571,20 +12617,6 @@
         y(function () {
             methods.reset();
         }, [current.value, methods]);
-        y(function () {
-            var subscription = methods.watch(function (data, _a) {
-                var _b = _a.name, name = _b === void 0 ? '' : _b, type = _a.type;
-                if (type === 'change') {
-                    var value = data[name];
-                    send({
-                        type: 'SAVE',
-                        key: current.value,
-                        value: value,
-                    });
-                }
-            });
-            return function () { return subscription.unsubscribe(); };
-        }, [methods, current.value, send]);
         // trigger submit once
         y(function () {
             if (isSubmitting && questions && submitUrl) {
@@ -12620,7 +12652,7 @@
             return null;
         }
         var QuestionComponent = questionsMapping[question === null || question === void 0 ? void 0 : question.type];
-        var saveValue = function (data) {
+        var saveValue = function (data, action) {
             var name = "".concat(id);
             var value = data[name];
             var type = 'NEXT';
@@ -12630,15 +12662,40 @@
             else if (canSubmit) {
                 type = 'SUBMIT';
             }
+            else if (action === 'back') {
+                type = 'PREVIOUS';
+            }
             send({
                 type: type,
                 key: current.value,
                 value: value,
             });
         };
+        var onSubmit = function (event) { return __awaiter(_this, void 0, void 0, function () {
+            var submitterValue, triggerSubmit, formData, obj;
+            var _a, _b;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
+                    case 0:
+                        event.preventDefault();
+                        submitterValue = (_b = (_a = event.nativeEvent) === null || _a === void 0 ? void 0 : _a.submitter) === null || _b === void 0 ? void 0 : _b.value;
+                        triggerSubmit = methods.handleSubmit(function (e) { return saveValue(e, submitterValue); });
+                        if (submitterValue === 'back') {
+                            formData = new FormData(event.target);
+                            obj = Object.fromEntries(formData);
+                            saveValue(obj, submitterValue);
+                            return [2 /*return*/];
+                        }
+                        return [4 /*yield*/, triggerSubmit(event)];
+                    case 1:
+                        _c.sent();
+                        return [2 /*return*/];
+                }
+            });
+        }); };
         return (ReactDOM.createElement("div", { className: isModalPopup ? appStyle['question-modal'] : appStyle['question-footer'] },
             ReactDOM.createElement(FormProvider, __assign$4({}, methods),
-                ReactDOM.createElement(Question, { title: title, subTitle: required && ReactDOM.createElement(Tag, null, t('required')), variant: variant, poweredByText: t('powered_by'), customerAllianceLink: t('website_url'), showFooter: showPromotion, actions: ReactDOM.createElement(Actions, null), onSubmit: methods.handleSubmit(saveValue), style: { display: (!isPersistent || (isPersistent && isPersistentOpen)) ? 'flex' : 'none' } },
+                ReactDOM.createElement(Question, { title: title, subTitle: required && ReactDOM.createElement(Tag, null, t('required')), variant: variant, poweredByText: t('powered_by'), customerAllianceLink: t('website_url'), showFooter: showPromotion, actions: ReactDOM.createElement(Actions, null), onSubmit: onSubmit, style: { display: (!isPersistent || (isPersistent && isPersistentOpen)) ? 'flex' : 'none' } },
                     isSubmitError && ReactDOM.createElement(Alert, { icon: getAsset('icon_error') }, t('submission_error')),
                     isSubmitted && (ReactDOM.createElement("div", { className: appStyle.success }, successResponse === null || successResponse === void 0 ? void 0 : successResponse.success_description)),
                     !isSubmitted && !isSubmitted && !isSubmitting && !isSubmitError && (ReactDOM.createElement(QuestionComponent, { question: question, answer: answer })),
@@ -12656,7 +12713,7 @@
                         ReactDOM.createElement(CustomerAllianceApp, null))))), parent);
     }
 
-    var revision = "192fdc2" ;
+    var revision = "0b03e5f" ;
     var randomID = "CA-questionnaire-".concat(genID());
     var defaults;
     var params;
@@ -12675,10 +12732,13 @@
             .replace('{locale}', language);
     }
     var setClosedOrAnswered = function (expiryDays) {
-        api.set("CA_".concat(params === null || params === void 0 ? void 0 : params.questionnaireID), JSON.stringify(params.frequency), { expires: expiryDays });
+        api.set("CA_".concat(params === null || params === void 0 ? void 0 : params.questionnaireID), JSON.stringify({ frequency: params.frequency, hasAnswered: hasAnswered }), { expires: expiryDays });
     };
     var hasClosedOrAnswered = function () { return !!api.get("CA_".concat(params.questionnaireID)); };
-    var removeCookies = function () { api.remove("CA_".concat(params === null || params === void 0 ? void 0 : params.questionnaireID)); };
+    var removeCookies = function () {
+        hasAnswered = false;
+        api.remove("CA_".concat(params === null || params === void 0 ? void 0 : params.questionnaireID));
+    };
     var checkForParamsMatch = function () {
         var _a, _b;
         var oldCookiesFreqStr = api.get("CA_".concat(params.questionnaireID));
@@ -12689,9 +12749,10 @@
             // To support old users whose cookies might be set to done
             return false;
         }
-        var oldCookiesFreq = JSON.parse(oldCookiesFreqStr);
-        return !(((_a = params.frequency) === null || _a === void 0 ? void 0 : _a.answered) !== (oldCookiesFreq === null || oldCookiesFreq === void 0 ? void 0 : oldCookiesFreq.answered)
-            || ((_b = params.frequency) === null || _b === void 0 ? void 0 : _b.closed) !== (oldCookiesFreq === null || oldCookiesFreq === void 0 ? void 0 : oldCookiesFreq.closed));
+        var oldCookies = JSON.parse(oldCookiesFreqStr);
+        var oldCookiesFreq = oldCookies.frequency;
+        return !((oldCookies.hasAnswered && ((_a = params.frequency) === null || _a === void 0 ? void 0 : _a.answered) !== (oldCookiesFreq === null || oldCookiesFreq === void 0 ? void 0 : oldCookiesFreq.answered))
+            || (!oldCookies.hasAnswered && ((_b = params.frequency) === null || _b === void 0 ? void 0 : _b.closed) !== (oldCookiesFreq === null || oldCookiesFreq === void 0 ? void 0 : oldCookiesFreq.closed)));
     };
     function init(options) {
         options.fetchUrl; options.submitUrl; var otherOptions = __rest$2(options, ["fetchUrl", "submitUrl"]);
