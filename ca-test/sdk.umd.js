@@ -12672,23 +12672,23 @@
             });
         };
         var onSubmit = function (event) { return __awaiter(_this, void 0, void 0, function () {
-            var submitterValue, triggerSubmit, formData, obj;
-            var _a, _b;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
+            var submitterValue, triggerSubmit, name_1;
+            var _a;
+            var _b, _c;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
                     case 0:
                         event.preventDefault();
-                        submitterValue = (_b = (_a = event.nativeEvent) === null || _a === void 0 ? void 0 : _a.submitter) === null || _b === void 0 ? void 0 : _b.value;
+                        submitterValue = (_c = (_b = event.nativeEvent) === null || _b === void 0 ? void 0 : _b.submitter) === null || _c === void 0 ? void 0 : _c.value;
                         triggerSubmit = methods.handleSubmit(function (e) { return saveValue(e, submitterValue); });
                         if (submitterValue === 'back') {
-                            formData = new FormData(event.target);
-                            obj = Object.fromEntries(formData);
-                            saveValue(obj, submitterValue);
+                            name_1 = "".concat(id);
+                            saveValue((_a = {}, _a[name_1] = methods.getValues(name_1), _a), submitterValue);
                             return [2 /*return*/];
                         }
                         return [4 /*yield*/, triggerSubmit(event)];
                     case 1:
-                        _c.sent();
+                        _d.sent();
                         return [2 /*return*/];
                 }
             });
@@ -12713,7 +12713,7 @@
                         ReactDOM.createElement(CustomerAllianceApp, null))))), parent);
     }
 
-    var revision = "0b03e5f" ;
+    var revision = "699042f" ;
     var randomID = "CA-questionnaire-".concat(genID());
     var defaults;
     var params;
