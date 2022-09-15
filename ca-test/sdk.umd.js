@@ -8882,11 +8882,12 @@
             }
             if (hasSubQuestions) {
                 var subQuestionEvents = question.sub_element_conditions.map(function (subQuestionSet, j) {
+                    var _a;
                     var arr = [];
                     if (Array.isArray(subQuestionSet.elements)) {
                         subQuestionSet.elements.forEach(function (subQuestion, subQuestionIndex) {
                             var _a;
-                            var nextSubQuestionName = generateQuestionName(j + subQuestionIndex + 1, "".concat(questionName, "_sub"));
+                            var nextSubQuestionName = generateQuestionName(j * 10 + subQuestionIndex + 1, "".concat(questionName, "_sub"));
                             lastSubQuestions.push(nextSubQuestionName);
                             var subQuestionId = (_a = subQuestion.question) === null || _a === void 0 ? void 0 : _a.id;
                             context[nextSubQuestionName] = {
@@ -8911,15 +8912,22 @@
                             });
                         });
                     }
+                    if (Array.isArray(states[questionName].on.NEXT) && states[questionName].on.NEXT.length) {
+                        (_a = states[questionName].on.NEXT).push.apply(_a, arr);
+                    }
+                    else {
+                        states[questionName].on.NEXT = __spreadArray$3([], arr, true);
+                    }
                     return arr;
                 });
-                states[questionName].on.NEXT = __spreadArray$3(__spreadArray$3([], subQuestionEvents[0], true), [
-                    originalPath,
-                ], false);
+                states[questionName].on.NEXT.push(originalPath);
                 lastSubQuestions.reverse();
                 subQuestionEvents.forEach(function (item) {
-                    item.forEach(function (sqe, ind) {
-                        states[sqe.target].on.NEXT = states[questionName].on.NEXT.slice(ind + 1);
+                    item.forEach(function (sqe) {
+                        var index = states[questionName].on.NEXT
+                            .findIndex(function (el) { return el.target === sqe.target; });
+                        states[sqe.target].on.NEXT = states[questionName].on.NEXT
+                            .slice(index + 1);
                         states[sqe.target].on.PREVIOUS = __spreadArray$3(__spreadArray$3([], lastSubQuestions.map(function (lastSubQuestion) {
                             var _a;
                             var subquestionNumber = ((_a = sqe === null || sqe === void 0 ? void 0 : sqe.target) === null || _a === void 0 ? void 0 : _a.split('subquestion_').length) !== 1 ? parseInt(sqe.target.split('subquestion_')[1], 10) : 1;
@@ -12713,7 +12721,7 @@
                         ReactDOM.createElement(CustomerAllianceApp, null))))), parent);
     }
 
-    var revision = "699042f" ;
+    var revision = "a46b949" ;
     var randomID = "CA-questionnaire-".concat(genID());
     var defaults;
     var params;
