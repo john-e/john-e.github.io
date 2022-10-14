@@ -285,7 +285,7 @@
 
     var api = init$2(defaultConverter, { path: '/' });
 
-    var version = "1.3.0";
+    var version = "1.4.0";
 
     function _isPlaceholder(a) {
       return a != null && typeof a === 'object' && a['@@functional/placeholder'] === true;
@@ -12721,7 +12721,7 @@
                         ReactDOM.createElement(CustomerAllianceApp, null))))), parent);
     }
 
-    var revision = "a46b949" ;
+    var revision = "8880684" ;
     var randomID = "CA-questionnaire-".concat(genID());
     var defaults;
     var params;
