@@ -591,6 +591,67 @@
         primaryColor: '#3B62B2',
         primaryTextColor: 'white',
     };
+    /**
+     * hex to rgb converter
+     */
+    function hexToRgb(hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result && result.length === 4 ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16),
+            a: 1,
+        } : null;
+    }
+    /**
+     * Rgb value to required overlay values converter
+     */
+    function overlay(bg, fg) {
+        var rb = bg.r, gb = bg.g, bb = bg.b, ab = bg.a;
+        var rf = fg.r, gf = fg.g, bf = fg.b, af = fg.a;
+        var afDiff = (1 - af);
+        var alpha = af + (ab * afDiff);
+        var Cr = (rf * af + rb * ab * afDiff) / alpha;
+        var Cg = (gf * af + gb * ab * afDiff) / alpha;
+        var Cb = (bf * af + bb * ab * afDiff) / alpha;
+        return "rgb(".concat(Cr, ",").concat(Cg, ",").concat(Cb, ")");
+    }
+    /**
+     * function to get background color values depending upon primary color
+     */
+    var getThemeColors = function (color) {
+        var hexColor = '';
+        if (color.match('^#(?:[A-Fa-f0-9]{3}){1,2}$')) { // check if hex color
+            hexColor = color;
+        }
+        else {
+            hexColor = '#3B62B2'; // default color added
+            console.warn('Color is required in Hex format falling back to default color');
+        }
+        var hexRgbColor = hexToRgb(hexColor);
+        if (!hexRgbColor) {
+            console.warn('Something is wrong with the color format provide falling back to default color variants');
+            return [
+                'rgb(215.8, 223.6, 239.6)',
+                'rgb(176.6, 192.2, 224.2)',
+                'rgb(137.4, 160.8, 208.8)',
+                'rgb(47.2, 78.4, 142.4)',
+            ];
+        }
+        var primaryBg200 = overlay(hexRgbColor, {
+            r: 255, g: 255, b: 255, a: 0.8,
+        });
+        var primaryBg300 = overlay(hexRgbColor, {
+            r: 255, g: 255, b: 255, a: 0.6,
+        });
+        var primaryBg400 = overlay(hexRgbColor, {
+            r: 255, g: 255, b: 255, a: 0.4,
+        });
+        var primaryBg600 = overlay(hexRgbColor, {
+            r: 0, g: 0, b: 0, a: 0.2,
+        });
+        return [primaryBg200, primaryBg300, primaryBg400, primaryBg600];
+    };
     function theme(theming) {
         var styling = mergeDeepRight$1(themeDefaults, pick$1(Object.keys(themeDefaults), theming));
         var _a = getThemeColors(styling.primaryColor), primaryBg200 = _a[0], primaryBg300 = _a[1], primaryBg400 = _a[2], primaryBg600 = _a[3];
@@ -701,67 +762,6 @@
         if (prefix === void 0) { prefix = ''; }
         return "".concat(prefix, "question_").concat(number);
     }
-    /**
-     * hex to rgb converter
-     */
-    function hexToRgb(hex) {
-        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result && result.length === 4 ? {
-            r: parseInt(result[1], 16),
-            g: parseInt(result[2], 16),
-            b: parseInt(result[3], 16),
-            a: 1,
-        } : null;
-    }
-    /**
-     * Rgb value to required overlay values converter
-     */
-    function overlay(bg, fg) {
-        var rb = bg.r, gb = bg.g, bb = bg.b, ab = bg.a;
-        var rf = fg.r, gf = fg.g, bf = fg.b, af = fg.a;
-        var afDiff = (1 - af);
-        var alpha = af + (ab * afDiff);
-        var Cr = (rf * af + rb * ab * afDiff) / alpha;
-        var Cg = (gf * af + gb * ab * afDiff) / alpha;
-        var Cb = (bf * af + bb * ab * afDiff) / alpha;
-        return "rgb(".concat(Cr, ",").concat(Cg, ",").concat(Cb, ")");
-    }
-    /**
-     * function to get background color values depending upon primary color
-     */
-    var getThemeColors = function (color) {
-        var hexColor = '';
-        if (color.match('^#(?:[A-Fa-f0-9]{3}){1,2}$')) { // check if hex color
-            hexColor = color;
-        }
-        else {
-            hexColor = '#3B62B2'; // default color added
-            console.warn('Color is required in Hex format falling back to default color');
-        }
-        var hexRgbColor = hexToRgb(hexColor);
-        if (!hexRgbColor) {
-            console.warn('Something is wrong with the color format provide falling back to default color variants');
-            return [
-                'rgb(215.8, 223.6, 239.6)',
-                'rgb(176.6, 192.2, 224.2)',
-                'rgb(137.4, 160.8, 208.8)',
-                'rgb(47.2, 78.4, 142.4)',
-            ];
-        }
-        var primaryBg200 = overlay(hexRgbColor, {
-            r: 255, g: 255, b: 255, a: 0.8,
-        });
-        var primaryBg300 = overlay(hexRgbColor, {
-            r: 255, g: 255, b: 255, a: 0.6,
-        });
-        var primaryBg400 = overlay(hexRgbColor, {
-            r: 255, g: 255, b: 255, a: 0.4,
-        });
-        var primaryBg600 = overlay(hexRgbColor, {
-            r: 0, g: 0, b: 0, a: 0.2,
-        });
-        return [primaryBg200, primaryBg300, primaryBg400, primaryBg600];
-    };
 
     function getAugmentedNamespace(n) {
     	if (n.__esModule) return n;
@@ -12721,7 +12721,7 @@
                         ReactDOM.createElement(CustomerAllianceApp, null))))), parent);
     }
 
-    var revision = "c8f34f3" ;
+    var revision = "cef27d0" ;
     var randomID = "CA-questionnaire-".concat(genID());
     var defaults;
     var params;
