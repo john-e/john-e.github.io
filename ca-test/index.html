@@ -75,7 +75,6 @@
         margin: 0;
       }
 
-      .flex-outer li input:not([type='checkbox']),
       .flex-outer li textarea {
         padding: 15px;
         min-height: 200px;
@@ -129,6 +128,10 @@
               <textarea id="initOptions"></textarea>
             </li>
             <li>
+              <label for="fixture">Fixture file (override request)</label>
+              <input type="file" id="fixture" accept=".json">
+            </li>
+            <li>
               <button type="button" onclick="handleInit()">Init</button>
               <button type="button" onclick="handleOpen()">Open</button>
             </li>
@@ -141,6 +144,7 @@
       document.getElementById('version').innerHTML = CA.version;
       const sdkIframe = document.getElementById('sdk-iframe');
 
+      const fixtureFile = document.getElementById('fixture');
       const defaultsTextarea = document.getElementById('defaults');
       const initOptionsTextarea = document.getElementById('initOptions');
       const defaults = {
@@ -166,6 +170,53 @@
       defaultsTextarea.innerHTML = JSON.stringify(defaults, undefined, 4);
       initOptionsTextarea.innerHTML = JSON.stringify(initOptions, undefined, 4);
 
+      const originalFrameFetch = sdkIframe.contentWindow.fetch;
+      let fileFixuteContext = '';
+
+      function buildFixtureResponse(content) {
+        return {
+          json: () => JSON.parse(content),
+          status: 200,
+        }
+      }
+
+      fixtureFile.addEventListener('change', function (e) {
+        const [file] = fixtureFile.files;
+        const reader = new FileReader();
+        reader.readAsText(file, "UTF-8");
+        reader.onload = function (evt) {
+          fileFixuteContext = evt.target.result;
+
+          try {
+            JSON.parse(fileFixuteContext)
+          } catch (e) {
+            alert('Invalid json file');
+          }
+        }
+        reader.onerror = function (evt) {
+          alert('Error loading file')
+        }
+      })
+
+      function fetchProxy(...args) {
+        const defaultOptions = JSON.parse(defaultsTextarea.value);
+        const initOptions = JSON.parse(initOptionsTextarea.value);
+        const questionnaireURL = defaultOptions.fetchUrl
+          .replace('{questionnaireID}', initOptions.questionnaireID)
+          .replace('{locale}', '');
+
+        const [fetchURL] = args;
+        if (fetchURL && fetchURL.includes(questionnaireURL) && fileFixuteContext) {
+          return Promise.resolve(buildFixtureResponse(fileFixuteContext));
+        }
+
+        return originalFrameFetch.call(sdkIframe.contentWindow, ...args);
+      }
+
+      function hookFrameFetch() {
+        sdkIframe.contentWindow.fetch = fetchProxy;
+      }
+
       function handleDefaults() {
         sdkIframe.contentWindow.CA.setDefaults(JSON.parse(defaultsTextarea.value));
         defaultsTextarea.setAttribute('data-init', 'true');
@@ -182,8 +233,11 @@
       }
 
       function handleOpen() {
+        console.log('open')
         sdkIframe.contentWindow.CA.open();
       }
+
+      hookFrameFetch();
     </script>
   </body>
 </html>
