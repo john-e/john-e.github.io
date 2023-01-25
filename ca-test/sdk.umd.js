@@ -9235,7 +9235,7 @@
      * @returns boolean
      */
     function useIsNextSubQuestion(formContext) {
-        var _a, _b, _c, _d, _e, _f;
+        var _a, _b, _c, _d, _e;
         var context = useFormContext();
         var watch = (formContext || context).watch;
         var surveyService = useSurveyService();
@@ -9248,25 +9248,48 @@
         var metaId = "".concat(machineId, ".").concat(questionName);
         var meta = current.meta[metaId];
         var id = (_b = meta === null || meta === void 0 ? void 0 : meta.question) === null || _b === void 0 ? void 0 : _b.id;
+        var questionId = (_c = meta === null || meta === void 0 ? void 0 : meta.question) === null || _c === void 0 ? void 0 : _c.id;
         var isLastQuestion = questionName.startsWith(lastQuestionName);
         if (!id || !isLastQuestion) {
             return false;
         }
         var currentAnswer = watch("".concat(id));
+        // if use parent question to run validations
         if (isSubQuestion) {
             metaId = "".concat(machineId, ".").concat(lastQuestionName);
-            meta = (_c = current.machine.idMap[metaId]) === null || _c === void 0 ? void 0 : _c.meta;
-            id = (_d = meta === null || meta === void 0 ? void 0 : meta.question) === null || _d === void 0 ? void 0 : _d.id;
+            meta = (_d = current.machine.idMap[metaId]) === null || _d === void 0 ? void 0 : _d.meta;
+            id = (_e = meta === null || meta === void 0 ? void 0 : meta.question) === null || _e === void 0 ? void 0 : _e.id;
             currentAnswer = current.context[lastQuestionName].answer;
         }
         var subQuestions = ((meta === null || meta === void 0 ? void 0 : meta.sub_element_conditions) || []);
         // filter out current subquestion
         if (isSubQuestion) {
-            var questionNumber_1 = Number(questionName.replace("".concat(lastQuestionName, "_subquestion_"), ''));
-            // To check if any more subquestions are left
-            if (((_f = (_e = subQuestions[0]) === null || _e === void 0 ? void 0 : _e.elements) === null || _f === void 0 ? void 0 : _f.filter(function (_, i) { return !(i < questionNumber_1); }).length) === 0) {
-                subQuestions = [];
-            }
+            var positionOfQuestion_1 = subQuestions.findIndex(function (_a) {
+                var subQuestionElements = _a.elements;
+                return subQuestionElements.some(function (_a) {
+                    var subQuestionElementId = _a.question.id;
+                    return subQuestionElementId === questionId;
+                });
+            });
+            subQuestions = subQuestions.filter(function (_, i) { return !(i < positionOfQuestion_1); }).filter(function (subQuestion) {
+                if (!subQuestion.values.length || !subQuestion.elements.length) {
+                    return false;
+                }
+                var positionOfQuestionInElements = subQuestion.elements.findIndex(function (_a) {
+                    var subQuestionElementId = _a.question.id;
+                    return subQuestionElementId === questionId;
+                });
+                var subQuestionElements = subQuestion.elements
+                    .filter(function (_, i) { return !(i < positionOfQuestionInElements); })
+                    .filter(function (_a) {
+                    var subQuestionElementId = _a.question.id;
+                    return subQuestionElementId !== questionId;
+                });
+                if (subQuestionElements.length === 0) {
+                    return false;
+                }
+                return true;
+            });
             questionName = lastQuestionName;
         }
         return subQuestions.some(function (_a) {
@@ -12721,7 +12744,7 @@
                         ReactDOM.createElement(CustomerAllianceApp, null))))), parent);
     }
 
-    var revision = "980d962" ;
+    var revision = "fcf3655" ;
     var randomID = "CA-questionnaire-".concat(genID());
     var defaults;
     var params;
