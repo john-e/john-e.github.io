@@ -285,7 +285,7 @@
 
     var api = init$2(defaultConverter, { path: '/' });
 
-    var version = "1.4.0";
+    var version = "1.4.1";
 
     function _isPlaceholder(a) {
       return a != null && typeof a === 'object' && a['@@functional/placeholder'] === true;
@@ -12690,11 +12690,11 @@
             if (isSubmitError) {
                 type = 'RETRY';
             }
-            else if (action === 'back') {
-                type = 'PREVIOUS';
-            }
             else if (canSubmit) {
                 type = 'SUBMIT';
+            }
+            if (action === 'back') {
+                type = 'PREVIOUS';
             }
             send({
                 type: type,
@@ -12744,7 +12744,7 @@
                         ReactDOM.createElement(CustomerAllianceApp, null))))), parent);
     }
 
-    var revision = "fcf3655" ;
+    var revision = "533854b" ;
     var randomID = "CA-questionnaire-".concat(genID());
     var defaults;
     var params;
