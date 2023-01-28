@@ -285,7 +285,7 @@
 
     var api = init$2(defaultConverter, { path: '/' });
 
-    var version = "1.4.1";
+    var version = "1.4.2";
 
     function _isPlaceholder(a) {
       return a != null && typeof a === 'object' && a['@@functional/placeholder'] === true;
@@ -8719,24 +8719,26 @@
             // create sub question payload
             if (hasSubQuestions) {
                 question.sub_element_conditions.forEach(function (subQuestionSet, j) {
-                    var _a, _b;
-                    var subQuestion = (_b = (_a = subQuestionSet.elements) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.question;
-                    var subQuestionName = generateQuestionName(j + 1, "".concat(questionName, "_sub"));
-                    var subAnswerData = answers[subQuestionName];
-                    var subQuestionType = subQuestion.type;
-                    if (!subAnswerData) {
-                        return;
-                    }
-                    var subAnswerPayload = {};
-                    if (subQuestionType === QuestionTypes.choice && subAnswerData.answer) {
-                        subAnswerPayload.choices = is$1(String, subAnswerData.answer)
-                            ? [subAnswerData.answer]
-                            : subAnswerData.answer;
-                    }
-                    else if (answerData.answer) {
-                        subAnswerPayload[subQuestionType] = subAnswerData.answer;
-                    }
-                    answerPayload.sub_question_answers[subQuestion.id] = subAnswerPayload;
+                    var _a;
+                    (_a = subQuestionSet.elements) === null || _a === void 0 ? void 0 : _a.forEach(function (_a, k) {
+                        var subQuestion = _a.question;
+                        var subQuestionName = generateQuestionName(j * 10 + k + 1, "".concat(questionName, "_sub"));
+                        var subAnswerData = answers[subQuestionName];
+                        var subQuestionType = subQuestion.type;
+                        if (!subAnswerData) {
+                            return;
+                        }
+                        var subAnswerPayload = {};
+                        if (subQuestionType === QuestionTypes.choice && subAnswerData.answer) {
+                            subAnswerPayload.choices = is$1(String, subAnswerData.answer)
+                                ? [subAnswerData.answer]
+                                : subAnswerData.answer;
+                        }
+                        else if (answerData.answer) {
+                            subAnswerPayload[subQuestionType] = subAnswerData.answer;
+                        }
+                        answerPayload.sub_question_answers[subQuestion.id] = subAnswerPayload;
+                    });
                 });
             }
             question_answers[id] = answerPayload;
@@ -12744,7 +12746,7 @@
                         ReactDOM.createElement(CustomerAllianceApp, null))))), parent);
     }
 
-    var revision = "533854b" ;
+    var revision = "6f37f3c" ;
     var randomID = "CA-questionnaire-".concat(genID());
     var defaults;
     var params;
