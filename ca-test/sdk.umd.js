@@ -285,7 +285,7 @@
 
     var api = init$2(defaultConverter, { path: '/' });
 
-    var version = "1.4.3";
+    var version = "1.4.4";
 
     function _isPlaceholder(a) {
       return a != null && typeof a === 'object' && a['@@functional/placeholder'] === true;
@@ -9384,21 +9384,20 @@
         var current = useActor(surveyService)[0];
         var isSubmitting = current.value === 'submitting';
         var isSubmitted = current.value === 'submitted';
-        var isSubmitError = current.value === 'submitError';
+        current.value === 'submitError';
         var canSubmit = useCanSubmit();
         if (isSubmitting) {
             return null;
         }
-        var isSubQuestion = is$1(String, current.value) && current.value.includes('subquestion_');
-        var isFirstQuestion = is$1(String, current.value) && current.value.includes('question_1');
+        var isFirstQuestion = is$1(String, current.value) && current.value === 'question_1';
         var onClose = function () {
             emitter.emit(isPersistent && !isSubmitted ? 'hide' : 'close');
         };
         return (ReactDOM.createElement(ReactDOM.Fragment, null,
-            (isSubQuestion || isSubmitError || isSubmitted || !isFirstQuestion) && ReactDOM.createElement("span", null),
-            ((!isSubQuestion && !isSubmitError && isFirstQuestion) || isSubmitted) && (ReactDOM.createElement(Button, { onClick: onClose, variant: isSubmitted ? 'primary' : 'base' }, t('close'))),
+            !isFirstQuestion && ReactDOM.createElement("span", null),
+            isFirstQuestion && (ReactDOM.createElement(Button, { onClick: onClose, variant: isSubmitted ? 'primary' : 'base' }, t('close'))),
             !isSubmitted && (ReactDOM.createElement("div", null,
-                (isSubQuestion || isSubmitError || !isFirstQuestion) && ReactDOM.createElement(Button, __assign$4({ type: "submit" }, register('action'), { value: "back" }), t('back')),
+                !isFirstQuestion && ReactDOM.createElement(Button, __assign$4({ type: "submit" }, register('action'), { value: "back" }), t('back')),
                 !isSubmitted && ReactDOM.createElement(Button, __assign$4({ type: "submit", variant: "primary" }, register('action'), { value: "next" }), t(canSubmit ? 'submit' : 'next'))))));
     }
 
@@ -10496,7 +10495,7 @@
             children));
     }
 
-    var css_248z$8 = ".loader_loader__oOS7Q {\n  -webkit-animation: loader_loader-rotate__0enFq 800ms infinite cubic-bezier(0.2, 0.4, 0.4, 0.4) forwards;\n          animation: loader_loader-rotate__0enFq 800ms infinite cubic-bezier(0.2, 0.4, 0.4, 0.4) forwards;\n}\n\n@-webkit-keyframes loader_loader-rotate__0enFq {\n  from {\n    transform: rotate(0deg);\n  }\n  to {\n    transform: rotate(360deg);\n  }\n}\n\n@keyframes loader_loader-rotate__0enFq {\n  from {\n    transform: rotate(0deg);\n  }\n  to {\n    transform: rotate(360deg);\n  }\n}";
+    var css_248z$8 = ".loader_loader__oOS7Q {\n  animation: loader_loader-rotate__0enFq 800ms infinite cubic-bezier(0.2, 0.4, 0.4, 0.4) forwards;\n}\n\n@keyframes loader_loader-rotate__0enFq {\n  from {\n    transform: rotate(0deg);\n  }\n  to {\n    transform: rotate(360deg);\n  }\n}";
     var styles$8 = {"loader":"loader_loader__oOS7Q","loader-rotate":"loader_loader-rotate__0enFq"};
     styleInject(css_248z$8);
 
@@ -12739,7 +12738,7 @@
                         ReactDOM.createElement(CustomerAllianceApp, null))))), parent);
     }
 
-    var revision = "3d74d3f" ;
+    var revision = "e12766e" ;
     var randomID = "CA-questionnaire-".concat(genID());
     var defaults;
     var params;
