@@ -285,7 +285,7 @@
 
     var api = init$2(defaultConverter, { path: '/' });
 
-    var version = "1.4.5";
+    var version = "1.4.2";
 
     function _isPlaceholder(a) {
       return a != null && typeof a === 'object' && a['@@functional/placeholder'] === true;
@@ -9394,7 +9394,7 @@
             emitter.emit(isPersistent && !isSubmitted ? 'hide' : 'close');
         };
         return (ReactDOM.createElement(ReactDOM.Fragment, null,
-            showBackButton && ReactDOM.createElement("span", null),
+            (showBackButton || isSubmitted) && ReactDOM.createElement("span", null),
             (isFirstQuestion || isSubmitted) && (ReactDOM.createElement(Button, { onClick: onClose, variant: isSubmitted ? 'primary' : 'base' }, t('close'))),
             !isSubmitted && (ReactDOM.createElement("div", null,
                 showBackButton && ReactDOM.createElement(Button, __assign$4({ type: "submit" }, register('action'), { value: "back" }), t('back')),
@@ -12737,7 +12737,7 @@
                         ReactDOM.createElement(CustomerAllianceApp, null))))), parent);
     }
 
-    var revision = "a2f4a01" ;
+    var revision = "ea29a6c" ;
     var randomID = "CA-questionnaire-".concat(genID());
     var defaults;
     var params;
