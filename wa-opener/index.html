@@ -83,6 +83,7 @@ button.on("click", function() {
   var cc = $('#cc').val().trim();
   var number = decodeURIComponent($('#number').val())
     .replace(/[^0-9]/g, '')
+    .replace(/^0/, '')
     .replace(new RegExp('^' + cc), '')
     .replace(/^0/, '');
   
